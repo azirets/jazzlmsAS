@@ -1,12 +1,11 @@
 import { group, t } from '../lib.mjs';
 
-// Requests whose spec-expected result differs from what the services return today.
-// They keep the expected status from API_TEST_CHECKLIST.md so the defect stays visible;
-// the folder is excluded from the acceptance run (see README).
+// Regression checks for the defects found by the checklist run (see API_TEST_FINDINGS.md).
+// Each request keeps the result the checklist expects; before the fixes these failed, now they must pass.
 export default function build() {
-  return group('09 Known defects · Aziret', () => {
-    t('DEF-USR-02', 'login with text/plain should be 400/415, not 500', {
-      m: 'POST', p: '/api/auth/login', as: 'none', s: 400, ct: 'text/plain', raw: '{"username":"x","password":"y"}',
+  return group('09 Defect regression · Aziret', () => {
+    t('DEF-USR-02', 'login with text/plain should be 415, not 500', {
+      m: 'POST', p: '/api/auth/login', as: 'none', s: 415, ct: 'text/plain', raw: '{"username":"x","password":"y"}',
     });
     t('DEF-USR-03', 'N6 malformed UUID on GET /api/users/{id}', { p: '/api/users/abc', s: 400 });
     t('DEF-USR-04', 'N6 malformed UUID on impersonate', { m: 'POST', p: '/api/auth/impersonate/abc', s: 400 });
@@ -28,7 +27,6 @@ export default function build() {
       tests: "pm.test('WWW-Authenticate: Bearer',()=>pm.expect(hdr('WWW-Authenticate')||'').to.match(/Bearer/i));",
     });
 
-    t('DEF-GW-03', 'unknown path without a token should be 401, not 404', { p: '/api/nothing', as: 'none', s: 401, type: 'none' });
     t('DEF-ANL-01', 'timeline with an unknown event type should be 400/empty, not 500', { p: '/api/analytics/timeline?type=XXX', s: 400 });
     t('DEF-ANL-02', 'timeline page=-1 should be 400', { p: '/api/analytics/timeline?page=-1', s: 400 });
     t('DEF-ANL-03', 'dashboard period=year should be 400', { p: '/api/analytics/dashboard?period=year', s: 400 });
@@ -66,13 +64,12 @@ export default function build() {
       m: 'POST', p: '/api/courses/{{k_dcrs}}/clone', as: '{{k_di2tok}}', s: 403, save: { k_dclone: 'd.id' },
     });
     t('DEF-ENR-01', "learner must not list a course's enrollments (names + emails)", { p: '/api/courses/{{k_dcrs}}/enrollments', as: 'learner', s: 403, type: 'none' });
-    t('DEF-ENR-02', "learner must not change another learner's progress", { m: 'PATCH', p: '/api/enrollments/{{k_denr2}}/progress', as: 'learner', s: 403, body: { progress: 100 } });
+    t('DEF-ENR-02', "learner must not change another learner's progress", { m: 'PATCH', p: '/api/enrollments/{{k_denr2}}/progress', as: 'learner', s: 403, type: 'none', body: { progress: 100 } });
     t('DEF-GW-02a', 'gateway has no route for GET /api/questions/{id}', { p: '/api/questions/{{k_dq}}', as: 'instructor', s: 200 });
     t('DEF-GW-02b', 'gateway has no route for PUT /api/questions/{id}', { m: 'PUT', p: '/api/questions/{{k_dq}}', as: 'instructor', s: 200, body: { type: 'MULTIPLE_CHOICE', text: 'kd-q2', data: { answers: [{ text: 'a', correct: true }, { text: 'b', correct: false }] } } });
     t('DEF-GW-02c', 'gateway has no route for DELETE /api/questions/{id}', { m: 'DELETE', p: '/api/questions/{{k_dq}}', as: 'instructor', s: 204 });
     t('DEF-CRS-03a', 'owner soft-deletes the course', { m: 'DELETE', p: '/api/courses/{{k_dcrs}}', as: 'instructor', s: 204 });
     t('DEF-CRS-03b', 'bin is admin-only: instructor restore should be 403', { m: 'POST', p: '/api/courses/{{k_dcrs}}/restore', as: 'instructor', s: 403, type: 'none' });
-    t('DEF-CRS-04a', 'delete it again so the purge check has a deleted course', { m: 'DELETE', p: '/api/courses/{{k_dcrs}}', as: 'instructor', s: 204, type: 'none' });
     t('DEF-CRS-04b', 'bin is admin-only: instructor purge should be 403', { m: 'DELETE', p: '/api/courses/{{k_dcrs}}/permanent', as: 'instructor', s: 403, type: 'none' });
 
     t('TEARDOWN-DEF-01', 'cleanup: purge the course', { m: 'DELETE', p: '/api/courses/{{k_dcrs}}/permanent', s: 204 });

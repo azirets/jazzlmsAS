@@ -73,9 +73,11 @@ The course-service global exception handler now maps malformed request parameter
 
 Generated check folders (see `README.md`) now cover every endpoint family of the five services with explicit positive and negative requests. Combined acceptance run: Setup, Security (N1–N8 + full matrix), E2E-1…7 with the 3b–7b gap scenarios, the three `08 Checks` folders and Teardown. Exact counts are in `Newman-acceptance-report.html`.
 
-### Defects (reproduce with folder `09 Known defects · Aziret`)
+### Defects found (regression checks: folder `09 Defect regression · Aziret`)
 
-| ID | Spec expects | Observed | Source cause |
+All rows below were fixed on branch `fix-api-defects` and verified against the rebuilt stack; before the fixes the same requests failed. DEF-GW-03 was reviewed and accepted as behaviour (an unrouted path never reaches the JWT filter and returns 404), so it is recorded in the checks as 404 and has no regression request.
+
+| ID | Spec expects | Observed | Source cause (fix) |
 |---|---|---|---|
 | DEF-GW-02a/b/c | `GET/PUT/DELETE /api/questions/{id}` work through the gateway | 404 (the same calls work on port 8082) | `api-gateway/application.yml`: the course-service route has no `/api/questions/**`. The frontend's question edit page calls this path. |
 | DEF-CRS-03b / 04b | Course bin (restore, permanent delete) is admin-only | Any TRAINER can restore and permanently delete | `JwtAuthFilter.authorized`: the rule "write on `/api/courses` → STAFF" returns before the bin rule. |

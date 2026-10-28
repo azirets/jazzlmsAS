@@ -11,7 +11,7 @@ const here = path.dirname(fileURLToPath(import.meta.url));
 const file = path.join(here, '..', 'JazzLMS.postman_collection.json');
 const col = JSON.parse(fs.readFileSync(file, 'utf8'));
 
-const GENERATED = [/^08 Checks/, /^09 Known defects/, /^06 Security · matrix/];
+const GENERATED = [/^08 Checks/, /^09 (Known defects|Defect regression)/, /^06 Security · matrix/];
 col.item = col.item.filter(i => !GENERATED.some(re => re.test(i.name)));
 
 // Shared test script: allow `expectedType = none` (gateway 401/403 with no body), JSON error bodies

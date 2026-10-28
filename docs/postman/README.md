@@ -14,7 +14,7 @@ The Postman collection and local environment are in this folder. The environment
 | `08 Checks · user-service · Aziret` | AUTH-01…06, DEMO-01, USR-01…08, SET-01/02, ORG (branches and groups). |
 | `08 Checks · course-service · Aziret` | CAT, CRS, ENR, RPT, UNT (incl. uploads and the learner flow), CRT, QST, TST. |
 | `08 Checks · notification, analytics, gamification · Aziret` | NTF-01…12, ANL-01…14, GAM-01…16. |
-| `09 Known defects · Aziret` | The spec-expected result for every defect found. **These requests fail today by design** — see `API_TEST_FINDINGS.md`. |
+| `09 Defect regression · Aziret` | One request per defect found by the checklist run, asserting the result the checklist expects. They failed before the fixes in `fix-api-defects` and pass now; see `API_TEST_FINDINGS.md`. |
 | `99 Teardown · Aziret` | Restores account settings and deletes the Setup fixtures. |
 
 Every generated folder creates its own users, courses and settings overrides and removes them again, so the folders can be run alone after `00 Setup`.
@@ -34,13 +34,12 @@ newman run docs/postman/JazzLMS.postman_collection.json `
   --folder '08 Checks · user-service · Aziret' `
   --folder '08 Checks · course-service · Aziret' `
   --folder '08 Checks · notification, analytics, gamification · Aziret' `
+  --folder '09 Defect regression · Aziret' `
   --folder '99 Teardown · Aziret' `
   --iteration-count 3 --delay-request 60 --reporters cli
 ```
 
 `jwtSecret` is only needed by `SEC-03e` (a correctly signed, expired token). Without it that one request skips itself.
-
-Add `--folder '09 Known defects · Aziret'` to see the defect list fail.
 
 The E2E extras use three more environment URLs (`zipkinUrl`, `lokiUrl`, `grafanaUrl`, `prometheusUrl`), already set to the local compose ports.
 
