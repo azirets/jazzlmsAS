@@ -20,3 +20,8 @@ frontend/dist/
 # Local
 *.log
 .env
+
+# Local Newman scratch exports (contain run-specific data)
+/work/e2e-three-runs.json
+/work/latest-run.json
+/work/latest-environment.json

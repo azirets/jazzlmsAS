@@ -6,6 +6,7 @@ import kz.jazz.lms.course.service.CourseService;
 import kz.jazz.lms.course.service.NotFoundException;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.MediaType;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
@@ -49,5 +50,25 @@ class CourseControllerTest {
         mvc.perform(get("/api/courses/" + UUID.randomUUID()))
                 .andExpect(status().isNotFound())
                 .andExpect(jsonPath("$.detail").value("Course not found"));
+    }
+
+    @Test
+    void malformedCourseIdGives400ProblemDetail() throws Exception {
+        mvc.perform(get("/api/courses/abc"))
+                .andExpect(status().isBadRequest())
+                .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_PROBLEM_JSON))
+                .andExpect(jsonPath("$.status").value(400))
+                .andExpect(jsonPath("$.detail").value("Invalid value for parameter: id"));
+    }
+
+    @Test
+    void malformedJsonGives400ProblemDetail() throws Exception {
+        mvc.perform(org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post("/api/courses")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{broken"))
+                .andExpect(status().isBadRequest())
+                .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_PROBLEM_JSON))
+                .andExpect(jsonPath("$.status").value(400))
+                .andExpect(jsonPath("$.detail").value("Request body is missing or malformed"));
     }
 }
