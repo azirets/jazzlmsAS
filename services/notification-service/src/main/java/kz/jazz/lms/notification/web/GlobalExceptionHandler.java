@@ -7,6 +7,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.web.HttpRequestMethodNotSupportedException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ProblemDetail;
+import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
@@ -33,6 +34,13 @@ public class GlobalExceptionHandler {
     }
 
     /** Любая непредвиденная ошибка -> 500 с ERROR и stack trace в логе (видно в Grafana). Текст исключения наружу не отдаём. */
+    /** Malformed JSON or an unknown enum value (for example eventType) in the body. */
+    @ExceptionHandler(HttpMessageNotReadableException.class)
+    public ProblemDetail unreadableBody(HttpMessageNotReadableException e) {
+        log.warn("Unreadable request body");
+        return ProblemDetail.forStatusAndDetail(HttpStatus.BAD_REQUEST, "Request body is missing or malformed");
+    }
+
     @ExceptionHandler(Exception.class)
     public ProblemDetail internal(Exception e, HttpServletRequest req) {
         log.error("Unhandled error on {} {}", req.getMethod(), req.getRequestURI(), e);

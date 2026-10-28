@@ -34,7 +34,8 @@ public class CourseController {
 
     @PostMapping("/{id}/clone")
     @ResponseStatus(HttpStatus.CREATED)
-    public CourseDto clone(@PathVariable UUID id, @RequestHeader("X-User-Id") UUID userId) { return service.clone(id, userId); }
+    public CourseDto clone(@PathVariable UUID id, @RequestHeader("X-User-Id") UUID userId,
+                           @RequestHeader("X-User-Role") String role) { return service.clone(id, userId, role); }
 
     @GetMapping
     public List<CourseDto> list(@RequestParam(required = false) String search) { return service.findAll(search); }
@@ -51,8 +52,9 @@ public class CourseController {
 
     @PutMapping("/{id}")
     public CourseDto update(@PathVariable UUID id, @Valid @RequestBody CourseRequest req,
-                            @RequestHeader(value = "X-User-Id", required = false) UUID userId) {
-        return service.update(id, req, userId);
+                            @RequestHeader(value = "X-User-Id", required = false) UUID userId,
+                            @RequestHeader(value = "X-User-Role", required = false) String role) {
+        return service.update(id, req, userId, role);
     }
 
     @DeleteMapping("/{id}")

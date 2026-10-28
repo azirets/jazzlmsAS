@@ -27,6 +27,8 @@ public class AnalyticsController {
     /** GET /api/analytics/dashboard?period=today|yesterday|week|month */
     @GetMapping("/dashboard")
     public Map<String, Object> dashboard(@RequestParam(defaultValue = "today") String period) {
+        if (!java.util.Set.of("today", "yesterday", "week", "month").contains(period))
+            throw new IllegalArgumentException("period must be one of today, yesterday, week, month");
         return stats.dashboard(period);
     }
 
@@ -43,6 +45,7 @@ public class AnalyticsController {
             @RequestParam(required = false) String courseId,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size) {
+        if (page < 0 || size < 1) throw new IllegalArgumentException("page must be >= 0 and size >= 1");
         return timeline.find(new TimelineService.Filter(from, to, type, userId, courseId), page, size);
     }
 

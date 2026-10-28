@@ -92,9 +92,10 @@ public class CourseService {
         return toDto(saved);
     }
 
-    public CourseDto update(UUID id, CourseRequest req, UUID userId) {
+    public CourseDto update(UUID id, CourseRequest req, UUID userId, String role) {
         log.info("Updating course {} by {}", id, userId);
         Course c = getEntity(id);
+        requireManage(c, userId, role);
         apply(c, req);
         Course saved = courses.save(c);
         events.publish(Topics.COURSE_EVENTS, EventType.COURSE_UPDATED, id.toString(),
@@ -113,9 +114,10 @@ public class CourseService {
     }
 
     /** Clone: копия курса со всеми уроками. Файлы в MinIO тоже копируются — иначе удаление одного курса сломало бы другой. */
-    public CourseDto clone(UUID id, UUID userId) {
+    public CourseDto clone(UUID id, UUID userId, String role) {
         log.info("Cloning course {} by {}", id, userId);
         Course src = getEntity(id);
+        requireManage(src, userId, role);
         Course copy = new Course();
         copy.setName(src.getName() + " (copy)");
         copy.setCode(src.getCode()); copy.setDescription(src.getDescription()); copy.setCategoryId(src.getCategoryId());
@@ -144,6 +146,16 @@ public class CourseService {
         events.publish(Topics.COURSE_EVENTS, EventType.COURSE_CREATED, saved.getId().toString(), Map.of(
                 "courseId", saved.getId().toString(), "courseName", saved.getName(), "userId", userId == null ? "" : userId.toString(), "clonedFrom", id.toString()));
         return toDto(saved);
+    }
+
+    /** Редактировать и клонировать может админ, создатель курса или преподаватель, записанный на курс как INSTRUCTOR. */
+    private void requireManage(Course c, UUID userId, String role) {
+        boolean admin = "ADMIN".equals(role) || "SUPER_ADMIN".equals(role);
+        if (admin) return;
+        boolean owner = userId != null && userId.equals(c.getCreatedBy());
+        boolean instructor = userId != null && enrollments.findByCourseIdAndUserId(c.getId(), userId)
+                .map(e -> e.getRole() == Enrollment.Role.INSTRUCTOR).orElse(false);
+        if (!owner && !instructor) throw new ForbiddenException("You are not an instructor of this course");
     }
 
     /** Мягкое удаление. Преподаватель может удалить только свой курс, админ — любой. */

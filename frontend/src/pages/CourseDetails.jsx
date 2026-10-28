@@ -23,7 +23,7 @@ export default function CourseDetails() {
   const menuRef = useRef(null)
   const { data: course, error, reload: reloadCourse } = useApi(`/api/courses/${id}`)
   const { data: units, error: unitsError, reload: reloadUnits } = useApi(`/api/courses/${id}/units`)
-  const { data: enrollments } = useApi(`/api/courses/${id}/enrollments`)
+  const { data: enrollments } = useApi(manage ? `/api/courses/${id}/enrollments` : null)   // list holds other users' names and emails: staff only
   const { data: files } = useApi(manage ? `/api/courses/${id}/files` : null)
 
   useEffect(() => {
@@ -41,7 +41,7 @@ export default function CourseDetails() {
     try { await api.put(`/api/courses/${id}`, body); reloadCourse() } catch (e) { alert(e.message) }
   }
 
-  const learners = (enrollments || []).filter((e) => e.role === 'LEARNER').length
+  const learners = manage ? (enrollments || []).filter((e) => e.role === 'LEARNER').length : (course?.learnersCount ?? 0)
   const instructors = (enrollments || []).filter((e) => e.role === 'INSTRUCTOR').length
   const done = (units || []).filter((u) => u.completed).length
 
@@ -160,7 +160,7 @@ export default function CourseDetails() {
           <SideItem icon="▦" title="Content" active={tab === 'content'} onClick={() => setTab('content')}
             sub={`${units?.length ?? 0} units · ${(units || []).filter((u) => !u.active).length} inactive`} />
           <SideItem icon="👤" title="Users & progress" active={tab === 'users'} onClick={() => setTab('users')}
-            sub={`${instructors} instructor · ${learners} learners`} />
+            sub={manage ? `${instructors} instructor · ${learners} learners` : `${learners} learners`} />
           {manage && <SideItem icon="📂" title="Files" active={tab === 'files'} onClick={() => setTab('files')} sub={`${files?.length ?? 0} files`} />}
           {manage && <SideItem icon="⛓" title="Rules & path" active={tab === 'rules'} onClick={() => setTab('rules')} sub={course?.sequential ? 'Sequential rule set' : 'Free order'} />}
           {manage && <SideItem icon="◔" title="Reports" active={false} onClick={() => nav(`/courses/${id}/reports`)} sub="Overview · Users · Unit matrix" />}

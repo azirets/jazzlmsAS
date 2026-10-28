@@ -6,6 +6,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ProblemDetail;
 import org.springframework.web.HttpRequestMethodNotSupportedException;
+import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 
@@ -18,6 +19,13 @@ public class GlobalExceptionHandler {
     public ProblemDetail badRequest(IllegalArgumentException e) {
         log.warn("IllegalArgumentException -> {}", e.getMessage());
         return ProblemDetail.forStatusAndDetail(HttpStatus.BAD_REQUEST, e.getMessage());
+    }
+
+    /** Unknown enum value or malformed date in a query parameter is a client error. */
+    @ExceptionHandler(MethodArgumentTypeMismatchException.class)
+    public ProblemDetail invalidArgument(MethodArgumentTypeMismatchException e) {
+        log.warn("Invalid request parameter {}", e.getName());
+        return ProblemDetail.forStatusAndDetail(HttpStatus.BAD_REQUEST, "Invalid value for parameter: " + e.getName());
     }
 
     /** Любая непредвиденная ошибка -> 500 с ERROR и stack trace в логе (видно в Grafana). Текст исключения наружу не отдаём. */

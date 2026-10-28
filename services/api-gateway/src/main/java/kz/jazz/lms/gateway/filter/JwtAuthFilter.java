@@ -111,22 +111,25 @@ public class JwtAuthFilter implements GlobalFilter, Ordered {
         if (path.startsWith("/api/users") && write) return ADMIN_ROLES.contains(role);
         if (path.startsWith("/api/users")) return STAFF_ROLES.contains(role);
         if (path.startsWith("/api/courses") && path.endsWith("/enroll")) return true;   // самозапись из каталога
-        if ((path.startsWith("/api/courses") || path.startsWith("/api/categories")) && write) return STAFF_ROLES.contains(role);
-        // корзина курсов (Undo delete / Permanently delete) — только администраторы
+        // корзина курсов (Undo delete / Permanently delete) — только администраторы; проверяется ДО общего правила записи
         if (path.equals("/api/courses/deleted") || path.endsWith("/restore") || path.endsWith("/permanent"))
             return ADMIN_ROLES.contains(role);
+        // список записей курса содержит имена и email других пользователей — только staff
+        if (path.startsWith("/api/courses/") && path.endsWith("/enrollments")) return STAFF_ROLES.contains(role);
+        if ((path.startsWith("/api/courses") || path.startsWith("/api/categories")) && write) return STAFF_ROLES.contains(role);
         // уроки: создавать/менять — преподаватели и админы; start/complete — любой записанный (проверит course-service)
         if (path.startsWith("/api/units") && write && !path.endsWith("/start") && !path.endsWith("/complete")
                 && !path.contains("/test/attempts"))                       // попытки теста создаёт ученик
             return STAFF_ROLES.contains(role);
         // банк вопросов и создание тестов — только преподаватели/админы (в т.ч. чтение: там правильные ответы)
         if (path.startsWith("/api/questions") || path.contains("/questions") || path.endsWith("/tests")) return STAFF_ROLES.contains(role);
-        if (path.startsWith("/api/enrollments") && write && !path.contains("/progress")) return STAFF_ROLES.contains(role);
+        if (path.startsWith("/api/enrollments") && write) return STAFF_ROLES.contains(role);   // в т.ч. PATCH /progress: у ученика прогресс считается из пройденных уроков
         return true;
     }
 
     private Mono<Void> reject(ServerWebExchange exchange, HttpStatus status) {
         exchange.getResponse().setStatusCode(status);
+        if (status == HttpStatus.UNAUTHORIZED) exchange.getResponse().getHeaders().set("WWW-Authenticate", "Bearer");
         return exchange.getResponse().setComplete();
     }
 

@@ -39,6 +39,10 @@ public class UserImportService {
     }
 
     public ImportResult importCsv(MultipartFile file) throws IOException {
+        String name = file.getOriginalFilename() == null ? "" : file.getOriginalFilename().toLowerCase();
+        String mime = file.getContentType() == null ? "" : file.getContentType().toLowerCase();
+        if (!(name.endsWith(".csv") || mime.contains("csv") || mime.startsWith("text/") || mime.equals("application/vnd.ms-excel")))
+            throw new BadRequestException("Only CSV files can be imported");
         List<ImportResult.Skipped> skipped = new ArrayList<>();
         int created = 0, lineNo = 0;
         try (BufferedReader reader = new BufferedReader(new InputStreamReader(file.getInputStream(), StandardCharsets.UTF_8))) {

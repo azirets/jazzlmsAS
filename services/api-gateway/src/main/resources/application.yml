@@ -37,7 +37,7 @@ spring:
             - id: course-service
               uri: http://${COURSE_SERVICE_HOST:localhost}:8082
               predicates:
-                - Path=/api/courses/**,/api/categories/**,/api/enrollments/**,/api/units/**,/api/certificates/**
+                - Path=/api/courses/**,/api/categories/**,/api/enrollments/**,/api/units/**,/api/certificates/**,/api/questions/**
             - id: notification-service
               uri: http://${NOTIFICATION_SERVICE_HOST:localhost}:8083
               predicates:

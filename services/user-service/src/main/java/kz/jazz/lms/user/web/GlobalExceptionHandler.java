@@ -7,7 +7,12 @@ import org.slf4j.LoggerFactory;
 import org.springframework.web.HttpRequestMethodNotSupportedException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ProblemDetail;
+import org.springframework.http.converter.HttpMessageNotReadableException;
+import org.springframework.web.HttpMediaTypeNotSupportedException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
+import org.springframework.web.bind.MissingServletRequestParameterException;
+import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
+import org.springframework.web.multipart.support.MissingServletRequestPartException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 
@@ -65,6 +70,32 @@ public class GlobalExceptionHandler {
                 .map(f -> f.getField() + ": " + f.getDefaultMessage())
                 .collect(Collectors.joining("; "));
         return ProblemDetail.forStatusAndDetail(HttpStatus.BAD_REQUEST, msg);
+    }
+
+    /** Invalid path/query types (for example a non-UUID id) are client errors. */
+    @ExceptionHandler(MethodArgumentTypeMismatchException.class)
+    public ProblemDetail invalidArgument(MethodArgumentTypeMismatchException e) {
+        log.warn("Invalid request parameter {}", e.getName());
+        return ProblemDetail.forStatusAndDetail(HttpStatus.BAD_REQUEST, "Invalid value for parameter: " + e.getName());
+    }
+
+    /** Malformed JSON or an unknown enum value in the body. */
+    @ExceptionHandler(HttpMessageNotReadableException.class)
+    public ProblemDetail unreadableBody(HttpMessageNotReadableException e) {
+        log.warn("Unreadable request body");
+        return ProblemDetail.forStatusAndDetail(HttpStatus.BAD_REQUEST, "Request body is missing or malformed");
+    }
+
+    @ExceptionHandler(HttpMediaTypeNotSupportedException.class)
+    public ProblemDetail unsupportedMediaType(HttpMediaTypeNotSupportedException e) {
+        log.warn("Unsupported media type: {}", e.getContentType());
+        return ProblemDetail.forStatusAndDetail(HttpStatus.UNSUPPORTED_MEDIA_TYPE, "Unsupported Content-Type; use application/json");
+    }
+
+    @ExceptionHandler({MissingServletRequestPartException.class, MissingServletRequestParameterException.class})
+    public ProblemDetail missingPart(Exception e) {
+        log.warn("Missing request part or parameter: {}", e.getMessage());
+        return ProblemDetail.forStatusAndDetail(HttpStatus.BAD_REQUEST, "Required request part or parameter is missing");
     }
 
     /** Любая непредвиденная ошибка -> 500 с ERROR и stack trace в логе (видно в Grafana). Текст исключения наружу не отдаём. */
